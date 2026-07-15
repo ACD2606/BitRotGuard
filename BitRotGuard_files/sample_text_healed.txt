@@ -1,0 +1,6 @@
+The quick brown fox jumps over the lazy dog near the riverbank at dawn.
+Silent bit rot can corrupt archived photographs, tax records, and code
+repositories without any warning sign appearing on the screen. Hamming
+codes solve this by weaving mathematical redundancy directly into the
+stored bytes, so a single flipped bit can be located and repaired later
+without ever needing a separate backup copy sitting on another disk.

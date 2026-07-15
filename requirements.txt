@@ -1,0 +1,5 @@
+flask>=3.0
+pillow
+numpy
+matplotlib
+fpdf2

@@ -1,0 +1,24 @@
+The quick brown fox jumps over the lazy dog near the riverbank at dawn.
+Silent bit rot can corrupt archived photographs, tax records, and code
+repositories without any warning sign appearing on the screen. Hamming
+codes solve this by weaving mathematical redundancy directly into the
+stored bytes, so a single flipped bit can be located and repaired later
+without ever needing a separate backup copy sitting on another disk.
+
+=== DATA INTEGRITY MATTERS ===
+
+Consider a hospital storing patient X-ray images digitally. If a single
+bit flips in the image header, the entire file may become unreadable.
+If it flips in the pixel data, a tumor shadow could vanish or appear
+where none exists. This is not science fiction — NASA's Voyager probes
+detected approximately 1 bit error per day in their onboard memory from
+cosmic ray bombardment during the Jupiter flyby.
+
+Financial institutions face similar risks: a flipped bit in a bank
+balance stored on disk could change $1,000,000 to $1,000,001 or $0.
+Without error-correcting codes, there is no way to detect this change.
+
+Error-correcting codes like Hamming(7,4) provide a mathematical safety
+net. By adding just 3 parity bits for every 4 data bits, any single-bit
+error in a 7-bit block can be automatically located and corrected —
+no human intervention, no backup copy needed.

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="BitRot Guard — Hamming(7,4) error-correcting code file protection demo with AI integration. Protect, corrupt, and heal files to see ECC in action.">
+    <title>BitRot Guard — Hamming Code File Protection</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ============================================================
+     MAIN APP
+     ============================================================ -->
+<div class="app-container">
+
+    <!-- HEADER -->
+    <header class="app-header">
+        <div class="header-brand">
+            <span class="header-logo">🛡️</span>
+            <div>
+                <h1 class="header-title">BitRot Guard</h1>
+                <p class="header-subtitle">Hamming-code self-healing file protection — detect, correct, and prove it</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-ghost btn-icon" id="btnExport" title="Export PDF Report" disabled>📄</button>
+        </div>
+    </header>
+
+    <!-- PROGRESS STEPPER -->
+    <nav class="stepper" id="stepper">
+        <div class="step active" data-step="1" id="step1">
+            <div class="step-number">1</div>
+            <div class="step-label">Choose File</div>
+        </div>
+        <div class="step-connector" id="conn1"></div>
+        <div class="step" data-step="2" id="step2">
+            <div class="step-number">2</div>
+            <div class="step-label">Protect</div>
+        </div>
+        <div class="step-connector" id="conn2"></div>
+        <div class="step" data-step="3" id="step3">
+            <div class="step-number">3</div>
+            <div class="step-label">Corrupt</div>
+        </div>
+        <div class="step-connector" id="conn3"></div>
+        <div class="step" data-step="4" id="step4">
+            <div class="step-number">4</div>
+            <div class="step-label">Heal</div>
+        </div>
+    </nav>
+
+    <!-- UPLOAD ZONE -->
+    <section id="uploadSection">
+        <div class="card">
+            <div class="card-body">
+                <div class="upload-zone" id="uploadZone">
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-title">Drop your file here</div>
+                    <div class="upload-subtitle">or <span id="browseLink">browse</span> to choose a file</div>
+                    <input type="file" id="fileInput" style="display:none">
+                </div>
+                <div class="file-info-bar hidden" id="fileInfoBar">
+                    <div class="file-info-icon" id="fileIcon">📄</div>
+                    <div class="file-info-details">
+                        <div class="file-info-name" id="fileName">—</div>
+                        <div class="file-info-meta" id="fileMeta">—</div>
+                    </div>
+                    <button class="btn btn-ghost" id="btnChangeFile" style="font-size:12px">Change</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ACTION BAR -->
+    <section class="hidden" id="actionSection" style="margin-top:20px">
+        <div class="card">
+            <div class="card-body">
+                <div class="action-bar">
+                    <button class="btn btn-purple" id="btnProtect" disabled>
+                        🛡️ Protect File
+                    </button>
+                    <button class="btn btn-orange" id="btnCorrupt" disabled>
+                        💥 Simulate Bit Rot
+                    </button>
+                    <button class="btn btn-green" id="btnHeal" disabled>
+                        ✨ Heal / Recover
+                    </button>
+                    <button class="btn btn-red" id="btnReset">
+                        ⟲ Reset
+                    </button>
+                    <div class="corruption-control">
+                        <label for="flipSlider">Bit flips:</label>
+                        <input type="range" class="corruption-slider" id="flipSlider" min="1" max="50" value="5">
+                        <span class="flip-count" id="flipCount">5</span>
+                    </div>
+                </div>
+                <!-- Status chips -->
+                <div class="status-bar" id="statusBar" style="margin-top:14px">
+                    <div class="chip chip-cyan" id="chipChosen">○ File chosen</div>
+                    <div class="chip chip-purple" id="chipProtected">○ Protected</div>
+                    <div class="chip chip-orange" id="chipCorrupted">○ Bit-rot simulated</div>
+                    <div class="chip chip-green" id="chipHealed">○ Healed</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- STATS CARDS -->
+    <section class="hidden" id="statsSection" style="margin-top:20px">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Original Size</div>
+                <div class="stat-value cyan" id="statOrigSize">—</div>
+                <div class="stat-sub" id="statOrigSub"></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">ECC Encoded Size</div>
+                <div class="stat-value purple" id="statEncSize">—</div>
+                <div class="stat-sub" id="statEncSub"></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Bit Flips</div>
+                <div class="stat-value orange" id="statFlips">0</div>
+                <div class="stat-sub" id="statFlipsSub"></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Errors Corrected</div>
+                <div class="stat-value green" id="statCorrected">—</div>
+                <div class="stat-sub" id="statCorrectedSub"></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">SHA-256 Verification</div>
+                <div class="stat-value" id="statHash">—</div>
+                <div class="stat-sub" id="statHashSub"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- COMPARISON PANELS -->
+    <section class="hidden" id="panelsSection" style="margin-top:20px">
+        <h2 class="section-title"><span class="icon">🔍</span> Side-by-Side Comparison</h2>
+        <div class="panels-grid">
+            <!-- Original -->
+            <div class="panel">
+                <div class="panel-header original">📄 Original</div>
+                <div class="panel-content" id="panelOriginal">
+                    <div class="panel-placeholder">
+                        <div class="icon">📄</div>
+                        <div>Select a file to preview</div>
+                    </div>
+                </div>
+            </div>
+            <!-- Unprotected -->
+            <div class="panel">
+                <div class="panel-header corrupted">☠️ Unprotected <span id="unprotLabel"></span></div>
+                <div class="panel-content" id="panelUnprotected">
+                    <div class="panel-placeholder">
+                        <div class="icon">🔒</div>
+                        <div>Protect the file first</div>
+                    </div>
+                </div>
+            </div>
+            <!-- Healed -->
+            <div class="panel">
+                <div class="panel-header healed">✅ Protected → Healed <span id="healedLabel"></span></div>
+                <div class="panel-content" id="panelHealed">
+                    <div class="panel-placeholder">
+                        <div class="icon">✨</div>
+                        <div>Heal after corruption</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- BIT GRID VISUALIZATION -->
+    <section class="hidden" id="bitGridSection" style="margin-top:20px">
+        <div class="card">
+            <div class="card-header"><span class="icon">🔬</span> Interactive Bit Visualization</div>
+            <div class="card-body">
+                <p style="font-size:12px;color:var(--text-secondary);margin-bottom:12px">
+                    Each square = 1 bit. <span style="color:var(--text-primary)">Bright</span> = 1, <span style="color:var(--text-muted)">Dark</span> = 0.
+                    Click bits in the unprotected view to manually flip them.
+                </p>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+                    <div>
+                        <div style="font-size:12px;font-weight:700;color:var(--cyan);margin-bottom:6px">Original</div>
+                        <div class="bit-grid-wrapper">
+                            <canvas class="bit-grid-canvas" id="bitGridOriginal" width="480" height="240"></canvas>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="font-size:12px;font-weight:700;color:var(--red);margin-bottom:6px">Unprotected (click to flip)</div>
+                        <div class="bit-grid-wrapper">
+                            <canvas class="bit-grid-canvas" id="bitGridUnprotected" width="480" height="240"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="bit-grid-info">
+                    <span id="bitGridInfo">Showing first 512 bytes (4,096 bits)</span>
+                    <span id="bitGridFlips" style="color:var(--orange)"></span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- DASHBOARD -->
+    <section class="hidden" id="dashboardSection" style="margin-top:20px">
+        <h2 class="section-title"><span class="icon">📊</span> Dashboard</h2>
+        <div class="dashboard-grid">
+            <!-- Integrity Chart -->
+            <div class="card">
+                <div class="card-header"><span class="icon">📈</span> Integrity Over Time</div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="integrityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <!-- Integrity Gauge -->
+            <div class="card">
+                <div class="card-header"><span class="icon">🎯</span> File Health</div>
+                <div class="card-body">
+                    <div style="display:flex;gap:20px;justify-content:center">
+                        <div class="gauge-wrapper">
+                            <svg class="gauge-svg" viewBox="0 0 120 120">
+                                <circle class="gauge-track" cx="60" cy="60" r="52"></circle>
+                                <circle class="gauge-fill" id="gaugeUnprot" cx="60" cy="60" r="52"
+                                    stroke="var(--red)" stroke-dasharray="326.7" stroke-dashoffset="0"></circle>
+                            </svg>
+                            <div class="gauge-label">
+                                <div class="gauge-value" id="gaugeUnprotVal" style="color:var(--red)">100%</div>
+                                <div class="gauge-caption">Unprotected</div>
+                            </div>
+                        </div>
+                        <div class="gauge-wrapper">
+                            <svg class="gauge-svg" viewBox="0 0 120 120">
+                                <circle class="gauge-track" cx="60" cy="60" r="52"></circle>
+                                <circle class="gauge-fill" id="gaugeHealed" cx="60" cy="60" r="52"
+                                    stroke="var(--green)" stroke-dasharray="326.7" stroke-dashoffset="0"></circle>
+                            </svg>
+                            <div class="gauge-label">
+                                <div class="gauge-value" id="gaugeHealedVal" style="color:var(--green)">100%</div>
+                                <div class="gauge-caption">Protected</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Corruption Heatmap -->
+            <div class="card full-width">
+                <div class="card-header"><span class="icon">🔥</span> Corruption Heatmap</div>
+                <div class="card-body">
+                    <div class="heatmap-container">
+                        <div class="heatmap-bar" id="heatmapBar"></div>
+                        <div class="heatmap-legend">
+                            <span>Byte 0</span>
+                            <span>No corruption ← → Heavy corruption</span>
+                            <span id="heatmapEnd">End of file</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ECC COMPARISON -->
+    <section class="hidden" id="eccSection" style="margin-top:20px">
+        <div class="card">
+            <div class="card-header"><span class="icon">⚖️</span> ECC Method Comparison</div>
+            <div class="card-body">
+                <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px">
+                    Compare three error-correction strategies on the same data with the same corruption:
+                </p>
+                <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px">
+                    <button class="btn btn-purple" id="btnCompareEcc">⚖️ Run Comparison</button>
+                    <span style="font-size:12px;color:var(--text-muted)" id="eccStatus"></span>
+                </div>
+                <div class="ecc-results hidden" id="eccResults"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ACTIVITY LOG -->
+    <section style="margin-top:20px">
+        <div class="card">
+            <div class="card-header"><span class="icon">📜</span> Activity Log</div>
+            <div class="card-body">
+                <div class="log-container" id="logContainer">
+                    <div class="log-entry">
+                        <span class="log-time">—</span>
+                        <span class="log-msg info">Welcome to BitRot Guard. Choose a file to begin.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</div>
+
+<!-- ============================================================
+     PARTICLE CANVAS (heal celebration)
+     ============================================================ -->
+<canvas class="particle-canvas hidden" id="particleCanvas"></canvas>
+
+<!-- ============================================================
+     SCRIPTS
+     ============================================================ -->
+<script src="/static/js/visualizations.js"></script>
+<script src="/static/js/app.js"></script>
+
+</body>
+</html>
